@@ -1,26 +1,126 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-//include images into your bundle
-import rigoImage from "../../img/rigo-baby.jpg";
+const API_URL = "https://playground.4geeks.com/todo";
+const USERNAME = "sergio";
 
-//create your first component
 const Home = () => {
-	return (
-		<div className="text-center">
-            
+	const [inputValue, setInputValue] = useState("");
+	const [todos, setTodos] = useState([]);
 
-			<h1 className="text-center mt-5">Hello Rigo!</h1>
-			<p>
-				<img src={rigoImage} />
-			</p>
-			<a href="#" className="btn btn-success">
-				If you see this green button... bootstrap is working...
-			</a>
-			<p>
-				Made by{" "}
-				<a href="http://www.4geeksacademy.com">4Geeks Academy</a>, with
-				love!
-			</p>
+	
+	const createUser = async () => {
+		try {
+			const res = await fetch(`${API_URL}/users/${USERNAME}`, {
+				method: "POST",
+			});
+			
+			if (res.ok || res.status === 400) {
+				loadTasks();
+			}
+		} catch (error) {
+			console.error("Error creating user:", error);
+		}
+	};
+
+	
+	const loadTasks = async () => {
+		try {
+			const res = await fetch(`${API_URL}/users/${USERNAME}`);
+			
+			if (res.ok) {
+				const data = await res.json();
+				
+				setTodos(data.todos || []);
+			}
+		} catch (error) {
+			console.error("Error loading tasks:", error);
+		}
+	};
+
+
+	const addTask = async (label) => {
+		const task = { label, is_done: false };
+		try {
+			const res = await fetch(`${API_URL}/todos/${USERNAME}`, {
+				method: "POST",
+				body: JSON.stringify(task),
+				headers: { "Content-Type": "application/json" },
+			});
+			if (res.ok) loadTasks();
+		} catch (error) {
+			console.error("Error adding task:", error);
+		}
+	};
+
+	
+	const deleteTask = async (id) => {
+		try {
+			const res = await fetch(`${API_URL}/todos/${id}`, {
+				method: "DELETE",
+			});
+			if (res.ok) loadTasks();
+		} catch (error) {
+			console.error("Error deleting task:", error);
+		}
+	};
+
+	
+	const clearAllTasks = async () => {
+		try {
+			const res = await fetch(`${API_URL}/users/${USERNAME}`, {
+				method: "DELETE",
+			});
+			if (res.ok) setTodos([]);
+		} catch (error) {
+			console.error("Error clearing all tasks:", error);
+		}
+	};
+
+	useEffect(() => {
+		createUser();
+	}, []);
+
+	return (
+		<div className="titulo">
+			<h1>todos</h1>
+			<div className="container">
+				<ul>
+					<li>
+						<input
+							type="text"
+							onChange={(e) => setInputValue(e.target.value)}
+							value={inputValue}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" && inputValue.trim() !== "") {
+									addTask(inputValue.trim());
+									setInputValue("");
+								}
+							}}
+							placeholder="What do you need to do?"
+						/>
+					</li>
+					{todos.map((item) => (
+						<li key={item.id}>
+							{item.label}
+							<button onClick={() => deleteTask(item.id)}>
+								<i className="fa-solid fa-trash"></i>
+							</button>
+						</li>
+					))}
+				</ul>
+
+				<div className="todos-counter">
+					{todos.length === 0
+						? "No hay tareas, agrega una!"
+						: `${todos.length} items left`}
+				</div>
+
+				{todos.length > 0 && (
+					<button className="clear-btn" onClick={clearAllTasks}>
+						Clear All Tasks
+					</button>
+				)}
+			</div>
 		</div>
 	);
 };
