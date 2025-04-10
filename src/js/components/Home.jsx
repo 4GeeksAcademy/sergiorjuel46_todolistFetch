@@ -7,20 +7,35 @@ const Home = () => {
 	const [inputValue, setInputValue] = useState("");
 	const [todos, setTodos] = useState([]);
 
-	
+
 	const createUser = async () => {
 		try {
-			const res = await fetch(`${API_URL}/users/${USERNAME}`, {
-				method: "POST",
+			   
+			const checkRes = await fetch(`${API_URL}/users/${USERNAME}`, {
+			method: "GET",
 			});
-			
-			if (res.ok || res.status === 400) {
-				loadTasks();
+	
+			if (checkRes.status === 404) {
+		
+			const createRes = await fetch(`${API_URL}/users/${USERNAME}`, {
+				method: "POST",
+				body: JSON.stringify({}),
+				headers: { "Content-Type": "application/json" },
+			});
+	
+			if (!createRes.ok) {
+				throw new Error(`Error creando usuario: ${createRes.status}`);
 			}
+			} else if (!checkRes.ok) {
+		
+			throw new Error(`Error verificando usuario: ${checkRes.status}`);
+			}
+	
+			loadTasks();
 		} catch (error) {
-			console.error("Error creating user:", error);
+			console.error("Error en createUser:", error);
 		}
-	};
+		};
 
 	
 	const loadTasks = async () => {
